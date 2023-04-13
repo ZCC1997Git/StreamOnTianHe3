@@ -8,7 +8,7 @@
 # include <omp.h>
 
 #ifndef STREAM_ARRAY_SIZE
-#   define STREAM_ARRAY_SIZE	10000000
+#   define STREAM_ARRAY_SIZE	10000
 #endif
 
 #ifndef NTIMES
@@ -172,11 +172,16 @@ int main()
         times[3][k] = mysecond() - times[3][k];
 
          /*Triad*/
-        STREAM_TYPE t=0;
+        register STREAM_TYPE t=0;
         times[4][k] = mysecond();
-        #pragma omp parallel for reduction(+:t)
-        for (j=0; j<STREAM_ARRAY_SIZE; j++)
-            t=a[j]+b[j]+c[j];
+        #pragma omp parallel reduction(+:t)
+        {
+            register STREAM_TYPE tt=t;
+            #pragma omp for
+            for (j=0; j<STREAM_ARRAY_SIZE; j++)
+                tt+=a[j]+b[j]+c[j];
+            t+=tt;
+        }
         times[4][k] = mysecond() - times[4][k];
         total+=t;
     }
